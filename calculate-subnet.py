@@ -2,7 +2,7 @@
 """
 Subnet Calculator
 Created by Vlad Markov
-Version 1.0
+Version 1.1
 ==========================================================================
 
 Software License:
@@ -14,6 +14,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ==========================================================================
 import ipaddress
+import argparse
 
 def read_ips_from_file(file_path):
     """Reads IP addresses from a file, one per line."""
@@ -29,7 +30,6 @@ def create_network_block(ip_list):
     sorted_ips = sorted(ip_objects)
     
     # Create a network from the sorted IPs
-    # Assuming the goal is to find the smallest network covering all IPs
     first_ip = sorted_ips[0]
     last_ip = sorted_ips[-1]
     
@@ -41,15 +41,19 @@ def create_network_block(ip_list):
     
     return None
 
-def main(file_path):
-    ip_list = read_ips_from_file(file_path)
+def main():
+    parser = argparse.ArgumentParser(description='Process a list of IP addresses from a file and calculate the network block.')
+    parser.add_argument('file_path', type=str, help='Path to the file containing IP addresses')
+    
+    args = parser.parse_args()
+    
+    ip_list = read_ips_from_file(args.file_path)
     network_block = create_network_block(ip_list)
+    
     if network_block:
         print(f"Network block: {network_block}")
     else:
         print("Could not calculate a network block.")
 
-# Example usage
-# Ensure the input file 'ip_list.txt' is in the same directory with each IP on a new line
-file_path = 'ip_list.txt'
-main(file_path)
+if __name__ == '__main__':
+    main()
