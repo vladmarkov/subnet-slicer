@@ -22,38 +22,52 @@ def read_ips_from_file(file_path):
         ip_list = [line.strip() for line in file if line.strip()]
     return ip_list
 
-def create_network_block(ip_list):
-    # Convert string IPs to ipaddress objects
-    ip_objects = [ipaddress.ip_address(ip) for ip in ip_list]
+def find_network_blocks(ip_list, max_gap):
+    # Convert string IPs to ipaddress objects and remove duplicates using a set
+    ip_objects = sorted({ipaddress.ip_address(ip) for ip in ip_list})
     
-    # Sort the IP addresses
-    sorted_ips = sorted(ip_objects)
+    # List to hold the network blocks
+    network_blocks = []
     
-    # Create a network from the sorted IPs
-    first_ip = sorted_ips[0]
-    last_ip = sorted_ips[-1]
+    # Initialize the first IP as the start of a range
+    start_ip = ip_objects[0]
     
+    # Iterate over the IPs to find contiguous ranges
+    for i in range(1, len(ip_objects)):
+        # Check if the current IP is within the maximum gap from the previous IP
+        if ip_objects[i] > ip_objects[i-1] + max_gap:
+            # Calculate the smallest subnet for the current range
+            network_blocks.append(calculate_network_block(start_ip, ip_objects[i-1]))
+            start_ip = ip_objects[i]
+    
+    # Add the last range
+    network_blocks.append(calculate_network_block(start_ip, ip_objects[-1]))
+    
+    return network_blocks
+
+def calculate_network_block(first_ip, last_ip):
     # Calculate the smallest subnet that contains both the first and last IP
     for prefix_length in range(32, -1, -1):
         network = ipaddress.ip_network(f"{first_ip}/{prefix_length}", strict=False)
         if last_ip in network:
             return network
-    
     return None
 
 def main():
-    parser = argparse.ArgumentParser(description='Process a list of IP addresses from a file and calculate the network block.')
+    parser = argparse.ArgumentParser(description='Process a list of IP addresses from a file and calculate the network blocks.')
     parser.add_argument('file_path', type=str, help='Path to the file containing IP addresses')
+    parser.add_argument('--max-gap', type=int, default=1, help='Maximum gap in size between IPs for the segment (default: 1)')
     
     args = parser.parse_args()
     
     ip_list = read_ips_from_file(args.file_path)
-    network_block = create_network_block(ip_list)
+    network_blocks = find_network_blocks(ip_list, args.max_gap)
     
-    if network_block:
-        print(f"Network block: {network_block}")
+    if network_blocks:
+        for block in network_blocks:
+            print(f"Network block: {block}")
     else:
-        print("Could not calculate a network block.")
+        print("Could not calculate any network blocks.")
 
 if __name__ == '__main__':
     main()
