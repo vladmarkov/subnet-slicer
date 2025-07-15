@@ -2,7 +2,7 @@
 """
 Subnet Calculator
 Created by Vlad Markov
-Version 1.1
+Version 2.0
 ==========================================================================
 
 Software License:
