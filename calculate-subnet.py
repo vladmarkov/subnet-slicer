@@ -2,7 +2,7 @@
 """
 Subnet Calculator
 Created by Vlad Markov
-Version 2.0
+Version 2.1
 ==========================================================================
 
 Software License:
@@ -47,7 +47,7 @@ def find_network_blocks(ip_list, max_gap):
 
 def calculate_network_block(first_ip, last_ip):
     # Calculate the smallest subnet that contains both the first and last IP
-    for prefix_length in range(32, -1, -1):
+    for prefix_length in range(32, 22, -1):  # Start from /32 to /23 to find the smallest subnet first
         network = ipaddress.ip_network(f"{first_ip}/{prefix_length}", strict=False)
         if last_ip in network:
             return network
