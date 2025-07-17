@@ -75,4 +75,4 @@ ID;IP Address;Location
 6;10.10.2.12;;DC1;
 ```
 
-In this case, use `--IPcolumn 1` and `--delimiter ";"`.
+In this case, use `--IPcolumn 2` and `--delimiter ";"`.
