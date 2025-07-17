@@ -1,7 +1,3 @@
-Here's an updated version of the README to reflect the recent changes, including support for CSV files, custom delimiters, and skipping rows:
-
----
-
 # Subnet Calculator
 
 ## Overview
@@ -55,7 +51,7 @@ Process a CSV file with the 6th column containing IP addresses, using a `;` deli
 ## Incoming File Format
 
 - **Text File**: One IP address per line.
-- - Example contents of `ip_list.txt`:
+- Example contents of `ip_list.txt`:
 
   ```
   10.10.10.10
