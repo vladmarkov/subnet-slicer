@@ -45,7 +45,7 @@ The Subnet Calculator is a Python tool designed to identify and calculate networ
 Process a CSV file with the 6th column containing IP addresses, using a `;` delimiter, and skip the first row:
 
 ```bash
-./calculate-subnet.py data.csv --csv --IPcolumn 5 --delimiter ";" --skip-rows 1 --max-gap 2
+./calculate-subnet.py data.csv --csv --IPcolumn 2 --delimiter ";" --skip-rows 1 --max-gap 2
 ```
 
 ## Incoming File Format
@@ -67,9 +67,12 @@ Process a CSV file with the 6th column containing IP addresses, using a `;` deli
 
 ```
 ID;IP Address;Location
-1;10.10.10.10;Office
-2;10.10.10.11;Office
-3;10.10.10.12;Data Center
+1;10.10.1.10;;Office1;
+2;10.10.1.11;;Office1;
+3;10.10.2.12;;DC1;
+4;10.10.5.10;;DC2;
+5;10.10.5.11;;DC2;
+6;10.10.2.12;;DC1;
 ```
 
 In this case, use `--IPcolumn 1` and `--delimiter ";"`.
