@@ -38,8 +38,8 @@ def read_ips_from_csv(file_path, ip_column, delimiter, skip_rows):
         for _ in range(skip_rows):
             next(reader, None)  # Skip the specified number of rows
         for row in reader:
-            if len(row) > ip_column:
-                ip_list.append(row[ip_column].strip())
+            if len(row) >= ip_column:  # Adjust for 1-based index
+                ip_list.append(row[ip_column - 1].strip())
     return ip_list
 
 def find_network_blocks(ip_list, max_gap):
@@ -78,7 +78,7 @@ def main():
     parser.add_argument('file_path', type=str, help='Path to the file containing IP addresses')
     parser.add_argument('--max-gap', type=int, default=1, help='Maximum gap in size between IPs for the segment (default: 1)')
     parser.add_argument('--csv', action='store_true', help='Indicate that the input file is a CSV file')
-    parser.add_argument('--IPcolumn', type=int, default=0, help='Column index for IP addresses in CSV file (default: 0)')
+    parser.add_argument('--IPcolumn', type=int, default=1, help='Column index for IP addresses in CSV file (default: 1)')
     parser.add_argument('--delimiter', type=str, default=',', help='Delimiter used in the CSV file (default: ",")')
     parser.add_argument('--skip-rows', type=int, default=0, help='Number of rows to skip in the CSV file (default: 0)')
     
