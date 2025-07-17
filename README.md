@@ -55,6 +55,16 @@ Process a CSV file with the 6th column containing IP addresses, using a `;` deli
 ## Incoming File Format
 
 - **Text File**: One IP address per line.
+- - Example contents of `ip_list.txt`:
+
+  ```
+  10.10.10.10
+  10.10.10.11
+  10.10.10.12
+  10.10.5.13
+  10.10.5.16
+  10.10.10.16
+  ```
 - **CSV File**: Specify the column with IP addresses and optionally the delimiter and rows to skip.
 
 ### Example CSV Content
