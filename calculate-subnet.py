@@ -25,7 +25,7 @@ import argparse
 import csv
 
 def read_ips_from_file(file_path):
-    """Reads IP addresses from a text file, one per line."""
+    """Reads IP addresses from a text file, one per line, ignoring empty lines."""
     with open(file_path, 'r') as file:
         ip_list = [line.strip() for line in file if line.strip()]
     return ip_list
@@ -38,7 +38,7 @@ def read_ips_from_csv(file_path, ip_column, delimiter, skip_rows):
         for _ in range(skip_rows):
             next(reader, None)  # Skip the specified number of rows
         for row in reader:
-            if len(row) >= ip_column:  # Adjust for 1-based index
+            if len(row) >= ip_column and row[ip_column - 1].strip():  # Adjust for 1-based index and check for non-empty values
                 ip_list.append(row[ip_column - 1].strip())
     return ip_list
 
