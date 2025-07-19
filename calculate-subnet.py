@@ -2,7 +2,7 @@
 """
 Subnet Calculator
 Created by Vlad Markov
-Version 3.0
+Version 3.1
 ==========================================================================
 
 Software License:
@@ -93,7 +93,7 @@ def main():
     
     if network_blocks:
         for block in network_blocks:
-            print(f"Network block: {block}")
+            print(block)
     else:
         print("Could not calculate any network blocks.")
 
