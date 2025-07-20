@@ -2,7 +2,7 @@
 """
 Subnet Calculator
 Created by Vlad Markov
-Version 3.1
+Version 3.2
 ==========================================================================
 
 Software License:
@@ -23,45 +23,50 @@ Commandline flags and defaults are available by running "python calculate-subnet
 import ipaddress
 import argparse
 import csv
+from collections import defaultdict
 
-def read_ips_from_file(file_path):
-    """Reads IP addresses from a text file, one per line, ignoring empty lines."""
-    with open(file_path, 'r') as file:
-        ip_list = [line.strip() for line in file if line.strip()]
-    return ip_list
-
-def read_ips_from_csv(file_path, ip_column, delimiter, skip_rows):
-    """Reads IP addresses from a specified column in a CSV file with a given delimiter, skipping initial rows."""
+def read_ips_from_csv(file_path, ip_column, aggregate_column, delimiter, skip_rows):
+    """Reads IP addresses and aggregate values from a specified column in a CSV file with a given delimiter, skipping initial rows."""
     ip_list = []
+    aggregate_map = defaultdict(set)
     with open(file_path, 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=delimiter)
         for _ in range(skip_rows):
             next(reader, None)  # Skip the specified number of rows
         for row in reader:
-            if len(row) >= ip_column and row[ip_column - 1].strip():  # Adjust for 1-based index and check for non-empty values
-                ip_list.append(row[ip_column - 1].strip())
-    return ip_list
+            if len(row) >= ip_column and row[ip_column - 1].strip():  # Check for non-empty IP values
+                ip = row[ip_column - 1].strip()
+                ip_list.append(ip)
+                if aggregate_column and len(row) >= aggregate_column:
+                    aggregate_value = row[aggregate_column - 1].strip()
+                    if aggregate_value:
+                        aggregate_map[ip].add(aggregate_value)
+    return ip_list, aggregate_map
 
-def find_network_blocks(ip_list, max_gap):
+def find_network_blocks(ip_list, aggregate_map, max_gap):
     # Convert string IPs to ipaddress objects and remove duplicates using a set
     ip_objects = sorted({ipaddress.ip_address(ip) for ip in ip_list})
     
-    # List to hold the network blocks
+    # List to hold the network blocks and their corresponding aggregates
     network_blocks = []
     
     # Initialize the first IP as the start of a range
     start_ip = ip_objects[0]
-    
+    current_aggregates = aggregate_map[start_ip.exploded]
+
     # Iterate over the IPs to find contiguous ranges
     for i in range(1, len(ip_objects)):
         # Check if the current IP is within the maximum gap from the previous IP
         if ip_objects[i] > ip_objects[i-1] + max_gap:
             # Calculate the smallest subnet for the current range
-            network_blocks.append(calculate_network_block(start_ip, ip_objects[i-1]))
+            network_blocks.append((calculate_network_block(start_ip, ip_objects[i-1]), current_aggregates))
             start_ip = ip_objects[i]
+            current_aggregates = set()
+        
+        current_aggregates.update(aggregate_map[ip_objects[i].exploded])
     
     # Add the last range
-    network_blocks.append(calculate_network_block(start_ip, ip_objects[-1]))
+    network_blocks.append((calculate_network_block(start_ip, ip_objects[-1]), current_aggregates))
     
     return network_blocks
 
@@ -74,26 +79,28 @@ def calculate_network_block(first_ip, last_ip):
     return None
 
 def main():
-    parser = argparse.ArgumentParser(description='Process a list of IP addresses from a file or CSV and calculate the network blocks.')
+    parser = argparse.ArgumentParser(description='Process a list of IP addresses from a CSV file and calculate the network blocks with aggregated values.')
     parser.add_argument('file_path', type=str, help='Path to the file containing IP addresses')
     parser.add_argument('--max-gap', type=int, default=1, help='Maximum gap in size between IPs for the segment (default: 1)')
     parser.add_argument('--csv', action='store_true', help='Indicate that the input file is a CSV file')
     parser.add_argument('--IPcolumn', type=int, default=1, help='Column index for IP addresses in CSV file (default: 1)')
     parser.add_argument('--delimiter', type=str, default=',', help='Delimiter used in the CSV file (default: ",")')
     parser.add_argument('--skip-rows', type=int, default=0, help='Number of rows to skip in the CSV file (default: 0)')
+    parser.add_argument('--aggregate-column', type=int, help='Column index for aggregate values in CSV file')
     
     args = parser.parse_args()
     
     if args.csv:
-        ip_list = read_ips_from_csv(args.file_path, args.IPcolumn, args.delimiter, args.skip_rows)
+        ip_list, aggregate_map = read_ips_from_csv(args.file_path, args.IPcolumn, args.aggregate_column, args.delimiter, args.skip_rows)
     else:
-        ip_list = read_ips_from_file(args.file_path)
+        print("This feature requires the --csv flag and relevant CSV arguments.")
+        return
     
-    network_blocks = find_network_blocks(ip_list, args.max_gap)
+    network_blocks = find_network_blocks(ip_list, aggregate_map, args.max_gap)
     
     if network_blocks:
-        for block in network_blocks:
-            print(block)
+        for block, aggregates in network_blocks:
+            print(f"{block}{args.delimiter}{','.join(sorted(aggregates))}")
     else:
         print("Could not calculate any network blocks.")
 
