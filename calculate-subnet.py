@@ -2,7 +2,7 @@
 """
 Subnet Calculator
 Created by Vlad Markov
-Version 3.2
+Version 3.3
 ==========================================================================
 
 Software License:
@@ -87,6 +87,7 @@ def main():
     parser.add_argument('--delimiter', type=str, default=',', help='Delimiter used in the CSV file (default: ",")')
     parser.add_argument('--skip-rows', type=int, default=0, help='Number of rows to skip in the CSV file (default: 0)')
     parser.add_argument('--aggregate-column', type=int, help='Column index for aggregate values in CSV file')
+    parser.add_argument('--aggregate-delimiter', type=str, default=';', help='Delimiter for aggregated values (default: ";")')
     
     args = parser.parse_args()
     
@@ -100,7 +101,8 @@ def main():
     
     if network_blocks:
         for block, aggregates in network_blocks:
-            print(f"{block}{args.delimiter}{','.join(sorted(aggregates))}")
+            aggregates_str = args.aggregate_delimiter.join(sorted(aggregates))
+            print(f"{block}{args.delimiter}\"{aggregates_str}\"")
     else:
         print("Could not calculate any network blocks.")
 
