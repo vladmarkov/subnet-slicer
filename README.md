@@ -1,8 +1,8 @@
-# Subnet Calculator
+# Subnet Slicer
 
 ## Overview
 
-The Subnet Calculator is a Python tool designed to identify and calculate network subnets from a list of IP addresses. This tool is particularly useful for network administrators and engineers who need to organize IP addresses into subnets efficiently. The script allows for customized segmentation using the `--max-gap` parameter, providing a granular approach to subnet calculation.
+The Subnet Slicer is a Python tool designed to identify and calculate network subnets from a list of IP addresses. This tool is particularly useful for network administrators and engineers who need to organize IP addresses into subnets efficiently. The script allows for customized segmentation using the `--max-gap` parameter, providing a granular approach to subnet calculation.
 
 ## Features
 
