@@ -2,7 +2,7 @@
 """
 Subnet Calculator
 Created by Vlad Markov
-Version 3.4
+Version 3.5
 ==========================================================================
 
 Software License:
@@ -25,8 +25,8 @@ import argparse
 import csv
 from collections import defaultdict
 
-def read_ips_from_csv(file_path, ip_column, aggregate_column, delimiter, skip_rows):
-    """Reads IP addresses and aggregate values from a specified column in a CSV file with a given delimiter, skipping initial rows."""
+def read_ips_from_csv(file_path, ip_column, aggregate_columns, delimiter, skip_rows):
+    """Reads IP addresses and aggregate values from specified columns in a CSV file with a given delimiter, skipping initial rows."""
     ip_list = []
     aggregate_map = defaultdict(set)
     with open(file_path, 'r') as csvfile:
@@ -37,10 +37,11 @@ def read_ips_from_csv(file_path, ip_column, aggregate_column, delimiter, skip_ro
             if len(row) >= ip_column and row[ip_column - 1].strip():  # Check for non-empty IP values
                 ip = row[ip_column - 1].strip()
                 ip_list.append(ip)
-                if aggregate_column and len(row) >= aggregate_column:
-                    aggregate_value = row[aggregate_column - 1].strip()
-                    if aggregate_value:
-                        aggregate_map[ip].add(aggregate_value)
+                for col in aggregate_columns:
+                    if len(row) >= col:
+                        aggregate_value = row[col - 1].strip()
+                        if aggregate_value:
+                            aggregate_map[ip].add(aggregate_value)
     return ip_list, aggregate_map
 
 def find_network_blocks(ip_list, aggregate_map, max_gap):
@@ -86,12 +87,17 @@ def main():
     parser.add_argument('--IPcolumn', type=int, default=1, help='Column index for IP addresses in CSV file (default: 1)')
     parser.add_argument('--delimiter', type=str, default=',', help='Delimiter used in the CSV file (default: ",")')
     parser.add_argument('--skip-rows', type=int, default=0, help='Number of rows to skip in the CSV file (default: 0)')
-    parser.add_argument('--aggregate-column', type=int, help='Column index for aggregate values in CSV file')
+    parser.add_argument('--aggregate-columns', type=str, help='Comma-separated list of column indices for aggregate values in CSV file')
     
     args = parser.parse_args()
     
     if args.csv:
-        ip_list, aggregate_map = read_ips_from_csv(args.file_path, args.IPcolumn, args.aggregate_column, args.delimiter, args.skip_rows)
+        if args.aggregate_columns:
+            aggregate_columns = [int(col) for col in args.aggregate_columns.split(',')]
+        else:
+            aggregate_columns = []
+            
+        ip_list, aggregate_map = read_ips_from_csv(args.file_path, args.IPcolumn, aggregate_columns, args.delimiter, args.skip_rows)
     else:
         print("This feature requires the --csv flag and relevant CSV arguments.")
         return
