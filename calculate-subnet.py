@@ -2,7 +2,7 @@
 """
 Subnet Calculator
 Created by Vlad Markov
-Version 4.0
+Version 4.1
 ==========================================================================
 
 Software License:
@@ -28,7 +28,7 @@ from collections import defaultdict
 def read_ips_from_csv(file_path, ip_column, aggregate_columns, delimiter, skip_rows):
     """Reads IP addresses and aggregate values from specified columns in a CSV file with a given delimiter, skipping initial rows."""
     ip_list = []
-    aggregate_map = defaultdict(set)
+    aggregate_map = defaultdict(lambda: defaultdict(set))
     with open(file_path, 'r') as csvfile:
         reader = csv.reader(csvfile, delimiter=delimiter)
         for _ in range(skip_rows):
@@ -41,7 +41,7 @@ def read_ips_from_csv(file_path, ip_column, aggregate_columns, delimiter, skip_r
                     if len(row) >= col:
                         aggregate_value = row[col - 1].strip()
                         if aggregate_value:
-                            aggregate_map[ip].add(aggregate_value)
+                            aggregate_map[ip][col].add(aggregate_value)
     return ip_list, aggregate_map
 
 def find_network_blocks(ip_list, aggregate_map, max_gap):
@@ -62,9 +62,10 @@ def find_network_blocks(ip_list, aggregate_map, max_gap):
             # Calculate the smallest subnet for the current range
             network_blocks.append((calculate_network_block(start_ip, ip_objects[i-1]), current_aggregates))
             start_ip = ip_objects[i]
-            current_aggregates = set()
+            current_aggregates = defaultdict(set)
         
-        current_aggregates.update(aggregate_map[ip_objects[i].exploded])
+        for col, values in aggregate_map[ip_objects[i].exploded].items():
+            current_aggregates[col].update(values)
     
     # Add the last range
     network_blocks.append((calculate_network_block(start_ip, ip_objects[-1]), current_aggregates))
@@ -102,12 +103,19 @@ def main():
         print("This feature requires the --csv flag and relevant CSV arguments.")
         return
 
+    # Select an aggregate delimiter that does not conflict with the CSV delimiter
+    potential_delimiters = [';', '|', '/', ':']
+    aggregate_delimiter = next(delim for delim in potential_delimiters if delim != args.delimiter)
+    
     network_blocks = find_network_blocks(ip_list, aggregate_map, args.max_gap)
     
     if network_blocks:
         for block, aggregates in network_blocks:
-            aggregates_str = args.delimiter.join(sorted(aggregates))
-            print(f"{block}{args.delimiter}\"{aggregates_str}\"")
+            aggregated_values = [
+                aggregate_delimiter.join(sorted(values)) for col, values in aggregates.items()
+            ]
+            aggregated_output = args.delimiter.join(f'"{val}"' for val in aggregated_values)
+            print(f"{block}{args.delimiter}{aggregated_output}")
     else:
         print("Could not calculate any network blocks.")
 
