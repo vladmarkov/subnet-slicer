@@ -2,7 +2,7 @@
 """
 Subnet Calculator
 Created by Vlad Markov
-Version 5.0
+Version 5.1
 ==========================================================================
 
 Software License:
@@ -25,7 +25,20 @@ import argparse
 import csv
 from collections import defaultdict
 
-def read_ips_from_csv(file_path, ip_column, aggregate_columns, delimiter, skip_rows, extract_info):
+def parse_aggregate_columns(aggregate_arg):
+    """Parse aggregate columns argument to extract column indices and character ranges if specified."""
+    columns = []
+    for part in aggregate_arg.split(','):
+        if '(' in part:
+            column, char_range = part.split('(')
+            column = int(column)
+            start, end = map(int, char_range.rstrip(')').split('-'))
+            columns.append({'column': column, 'start': start, 'end': end})
+        else:
+            columns.append({'column': int(part)})
+    return columns
+
+def read_ips_from_csv(file_path, ip_column, aggregate_columns, delimiter, skip_rows):
     """Reads IP addresses and aggregate values from specified columns in a CSV file with a given delimiter, skipping initial rows."""
     ip_list = []
     aggregate_map = defaultdict(lambda: defaultdict(set))
@@ -37,15 +50,16 @@ def read_ips_from_csv(file_path, ip_column, aggregate_columns, delimiter, skip_r
             if len(row) >= ip_column and row[ip_column - 1].strip():  # Check for non-empty IP values
                 ip = row[ip_column - 1].strip()
                 ip_list.append(ip)
-                for col in aggregate_columns:
+                for col_info in aggregate_columns:
+                    col = col_info['column']
                     if len(row) >= col:
                         aggregate_value = row[col - 1].strip()
                         if aggregate_value:
-                            aggregate_map[ip][col].add(aggregate_value)
-                if extract_info and len(row) >= extract_info['column']:
-                    text_value = row[extract_info['column'] - 1].strip()
-                    extracted_value = text_value[extract_info['start'] - 1:extract_info['end']]
-                    aggregate_map[ip]['extracted'].add(extracted_value)
+                            if 'start' in col_info and 'end' in col_info:
+                                extracted_value = aggregate_value[col_info['start'] - 1:col_info['end']]
+                                aggregate_map[ip][col].add(extracted_value)
+                            else:
+                                aggregate_map[ip][col].add(aggregate_value)
     return ip_list, aggregate_map
 
 def find_network_blocks(ip_list, aggregate_map, max_gap):
@@ -84,16 +98,6 @@ def calculate_network_block(first_ip, last_ip):
             return network
     return None
 
-def parse_extract_info(extract_arg):
-    """Parse the extract argument to get column and character range."""
-    try:
-        column, char_range = extract_arg.split('(')
-        column = int(column)
-        start, end = map(int, char_range.rstrip(')').split('-'))
-        return {'column': column, 'start': start, 'end': end}
-    except ValueError:
-        raise argparse.ArgumentTypeError("Invalid format for --extract argument. Use format 'column(start-end)'.")
-
 def main():
     parser = argparse.ArgumentParser(description='Process a list of IP addresses from a CSV file and calculate the network blocks with aggregated values.')
     parser.add_argument('file_path', type=str, help='Path to the file containing IP addresses')
@@ -102,18 +106,13 @@ def main():
     parser.add_argument('--IPcolumn', type=int, default=1, help='Column index for IP addresses in CSV file (default: 1)')
     parser.add_argument('--delimiter', type=str, default=',', help='Delimiter used in the CSV file (default: ",")')
     parser.add_argument('--skip-rows', type=int, default=0, help='Number of rows to skip in the CSV file (default: 0)')
-    parser.add_argument('--aggregate-columns', type=str, help='Comma-separated list of column indices for aggregate values in CSV file')
-    parser.add_argument('--extract', type=parse_extract_info, help='Column and character range to extract, format "column(start-end)"')
+    parser.add_argument('--aggregate-columns', type=parse_aggregate_columns, help='Comma-separated list of column indices for aggregate values in CSV file, with optional extraction format "column(start-end)"')
 
     args = parser.parse_args()
     
     if args.csv:
-        if args.aggregate_columns:
-            aggregate_columns = [int(col) for col in args.aggregate_columns.split(',')]
-        else:
-            aggregate_columns = []
-            
-        ip_list, aggregate_map = read_ips_from_csv(args.file_path, args.IPcolumn, aggregate_columns, args.delimiter, args.skip_rows, args.extract)
+        aggregate_columns = args.aggregate_columns if args.aggregate_columns else []
+        ip_list, aggregate_map = read_ips_from_csv(args.file_path, args.IPcolumn, aggregate_columns, args.delimiter, args.skip_rows)
     else:
         print("This feature requires the --csv flag and relevant CSV arguments.")
         return
