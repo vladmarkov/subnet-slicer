@@ -2,7 +2,7 @@
 """
 Subnet Calculator
 Created by Vlad Markov
-Version 5.1
+Version 5.2
 ==========================================================================
 
 Software License:
@@ -29,10 +29,10 @@ def parse_aggregate_columns(aggregate_arg):
     """Parse aggregate columns argument to extract column indices and character ranges if specified."""
     columns = []
     for part in aggregate_arg.split(','):
-        if '(' in part:
-            column, char_range = part.split('(')
+        if ':' in part:
+            column, char_range = part.split(':')
             column = int(column)
-            start, end = map(int, char_range.rstrip(')').split('-'))
+            start, end = map(int, char_range.split('-'))
             columns.append({'column': column, 'start': start, 'end': end})
         else:
             columns.append({'column': int(part)})
@@ -106,7 +106,7 @@ def main():
     parser.add_argument('--IPcolumn', type=int, default=1, help='Column index for IP addresses in CSV file (default: 1)')
     parser.add_argument('--delimiter', type=str, default=',', help='Delimiter used in the CSV file (default: ",")')
     parser.add_argument('--skip-rows', type=int, default=0, help='Number of rows to skip in the CSV file (default: 0)')
-    parser.add_argument('--aggregate-columns', type=parse_aggregate_columns, help='Comma-separated list of column indices for aggregate values in CSV file, with optional extraction format "column(start-end)"')
+    parser.add_argument('--aggregate-columns', type=parse_aggregate_columns, help='Comma-separated list of column indices for aggregate values in CSV file, with optional extraction format "column:start-end"')
 
     args = parser.parse_args()
     
