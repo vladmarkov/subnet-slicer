@@ -2,7 +2,7 @@
 """
 Subnet Calculator
 Created by Vlad Markov
-Version 5.2
+Version 5.3
 ==========================================================================
 
 Software License:
@@ -99,14 +99,14 @@ def calculate_network_block(first_ip, last_ip):
     return None
 
 def main():
-    parser = argparse.ArgumentParser(description='Process a list of IP addresses from a CSV file and calculate the network blocks with aggregated values.')
+    parser = argparse.ArgumentParser(description='Process a list of IP addresses and aggregated values from a CSV file.')
     parser.add_argument('file_path', type=str, help='Path to the file containing IP addresses')
     parser.add_argument('--max-gap', type=int, default=1, help='Maximum gap in size between IPs for the segment (default: 1)')
     parser.add_argument('--csv', action='store_true', help='Indicate that the input file is a CSV file')
-    parser.add_argument('--IPcolumn', type=int, default=1, help='Column index for IP addresses in CSV file (default: 1)')
+    parser.add_argument('--IPcolumn', type=int, default=1, help='Column index for IP addresses in CSV file (default: 1). It should precede any aggregation columns.')
     parser.add_argument('--delimiter', type=str, default=',', help='Delimiter used in the CSV file (default: ",")')
     parser.add_argument('--skip-rows', type=int, default=0, help='Number of rows to skip in the CSV file (default: 0)')
-    parser.add_argument('--aggregate-columns', type=parse_aggregate_columns, help='Comma-separated list of column indices for aggregate values in CSV file, with optional extraction format "column:start-end"')
+    parser.add_argument('--aggregate-columns', type=parse_aggregate_columns, help='Comma-separated list of column indices for aggregate values in CSV file, with optional extraction format "column:start-end". These columns should follow the IP column.')
 
     args = parser.parse_args()
     
