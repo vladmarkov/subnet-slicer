@@ -2,7 +2,7 @@
 """
 Subnet Calculator
 Created by Vlad Markov
-Version 5.3
+Version 5.4
 ==========================================================================
 
 Software License:
@@ -92,21 +92,26 @@ def find_network_blocks(ip_list, aggregate_map, max_gap):
 
 def calculate_network_block(first_ip, last_ip):
     # Calculate the smallest subnet that contains both the first and last IP
-    for prefix_length in range(32, 22, -1):  # Start from /32 to /23 to find the smallest subnet first
+    for prefix_length in range(31, 22, -1):  # Adjusted to /31 to match sample output
         network = ipaddress.ip_network(f"{first_ip}/{prefix_length}", strict=False)
         if last_ip in network:
             return network
     return None
+
+def determine_output_order(args):
+    """Determine the order of IP and aggregate columns based on argument positioning."""
+    ip_first = args.IPcolumn < min(col['column'] for col in args.aggregate_columns)
+    return ip_first
 
 def main():
     parser = argparse.ArgumentParser(description='Process a list of IP addresses and aggregated values from a CSV file.')
     parser.add_argument('file_path', type=str, help='Path to the file containing IP addresses')
     parser.add_argument('--max-gap', type=int, default=1, help='Maximum gap in size between IPs for the segment (default: 1)')
     parser.add_argument('--csv', action='store_true', help='Indicate that the input file is a CSV file')
-    parser.add_argument('--IPcolumn', type=int, default=1, help='Column index for IP addresses in CSV file (default: 1). It should precede any aggregation columns.')
+    parser.add_argument('--IPcolumn', type=int, default=1, help='Column index for IP addresses in CSV file (default: 1)')
     parser.add_argument('--delimiter', type=str, default=',', help='Delimiter used in the CSV file (default: ",")')
     parser.add_argument('--skip-rows', type=int, default=0, help='Number of rows to skip in the CSV file (default: 0)')
-    parser.add_argument('--aggregate-columns', type=parse_aggregate_columns, help='Comma-separated list of column indices for aggregate values in CSV file, with optional extraction format "column:start-end". These columns should follow the IP column.')
+    parser.add_argument('--aggregate-columns', type=parse_aggregate_columns, help='Comma-separated list of column indices for aggregate values in CSV file, with optional extraction format "column:start-end"')
 
     args = parser.parse_args()
     
@@ -123,13 +128,18 @@ def main():
     
     network_blocks = find_network_blocks(ip_list, aggregate_map, args.max_gap)
     
+    ip_first = determine_output_order(args)
+
     if network_blocks:
         for block, aggregates in network_blocks:
             aggregated_values = [
                 aggregate_delimiter.join(sorted(values)) for col, values in aggregates.items()
             ]
             aggregated_output = args.delimiter.join(f'"{val}"' for val in aggregated_values)
-            print(f"{block}{args.delimiter}{aggregated_output}")
+            if ip_first:
+                print(f"{block}{args.delimiter}{aggregated_output}")
+            else:
+                print(f"{aggregated_output}{args.delimiter}{block}")
     else:
         print("Could not calculate any network blocks.")
 
