@@ -2,7 +2,7 @@
 """
 Subnet Calculator
 Created by Vlad Markov
-Version 5.4
+Version 5.5
 ==========================================================================
 
 Software License:
@@ -98,11 +98,6 @@ def calculate_network_block(first_ip, last_ip):
             return network
     return None
 
-def determine_output_order(args):
-    """Determine the order of IP and aggregate columns based on argument positioning."""
-    ip_first = args.IPcolumn < min(col['column'] for col in args.aggregate_columns)
-    return ip_first
-
 def main():
     parser = argparse.ArgumentParser(description='Process a list of IP addresses and aggregated values from a CSV file.')
     parser.add_argument('file_path', type=str, help='Path to the file containing IP addresses')
@@ -127,8 +122,9 @@ def main():
     aggregate_delimiter = next(delim for delim in potential_delimiters if delim != args.delimiter)
     
     network_blocks = find_network_blocks(ip_list, aggregate_map, args.max_gap)
-    
-    ip_first = determine_output_order(args)
+
+    # Determine the output order based on argument parsing
+    ip_first = '--IPcolumn' in parser.prog
 
     if network_blocks:
         for block, aggregates in network_blocks:
