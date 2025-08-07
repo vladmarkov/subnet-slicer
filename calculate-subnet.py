@@ -2,7 +2,7 @@
 """
 Subnet Calculator
 Created by Vlad Markov
-Version 5.6
+Version 6.0
 ==========================================================================
 
 Software License:
@@ -109,24 +109,24 @@ def main():
     parser = argparse.ArgumentParser(description='Process a list of IP addresses and aggregated values from a CSV file.')
     parser.add_argument('file_path', type=str, help='Path to the file containing IP addresses')
     parser.add_argument('--max-gap', type=int, default=1, help='Maximum gap in size between IPs for the segment (default: 1)')
-    parser.add_argument('--csv', action='store_true', help='Indicate that the input file is a CSV file')
+    parser.add_argument('--csv', type=str, nargs='?', const=',', help='Indicate that the input file is a CSV file and optionally specify a delimiter (default: ",")')
     parser.add_argument('--IPcolumn', type=int, default=1, help='Column index for IP addresses in CSV file (default: 1)')
-    parser.add_argument('--delimiter', type=str, default=',', help='Delimiter used in the CSV file (default: ",")')
     parser.add_argument('--skip-rows', type=int, default=0, help='Number of rows to skip in the CSV file (default: 0)')
     parser.add_argument('--aggregate-columns', type=parse_aggregate_columns, help='Comma-separated list of column indices for aggregate values in CSV file, with optional extraction format "column:start-end"')
 
     args = parser.parse_args()
     
     if args.csv:
+        delimiter = args.csv
         aggregate_columns = args.aggregate_columns if args.aggregate_columns else []
-        ip_list, aggregate_map = read_ips_from_csv(args.file_path, args.IPcolumn, aggregate_columns, args.delimiter, args.skip_rows)
+        ip_list, aggregate_map = read_ips_from_csv(args.file_path, args.IPcolumn, aggregate_columns, delimiter, args.skip_rows)
     else:
         print("This feature requires the --csv flag and relevant CSV arguments.")
         return
 
     # Select an aggregate delimiter that does not conflict with the CSV delimiter
     potential_delimiters = [';', '|', '/', ':']
-    aggregate_delimiter = next(delim for delim in potential_delimiters if delim != args.delimiter)
+    aggregate_delimiter = next(delim for delim in potential_delimiters if delim != delimiter)
     
     network_blocks = find_network_blocks(ip_list, aggregate_map, args.max_gap)
 
@@ -137,11 +137,11 @@ def main():
             aggregated_values = [
                 aggregate_delimiter.join(sorted(values)) for col, values in aggregates.items()
             ]
-            aggregated_output = args.delimiter.join(f'"{val}"' for val in aggregated_values)
+            aggregated_output = delimiter.join(f'"{val}"' for val in aggregated_values)
             if ip_first:
-                print(f"{block}{args.delimiter}{aggregated_output}")
+                print(f"{block}{delimiter}{aggregated_output}")
             else:
-                print(f"{aggregated_output}{args.delimiter}{block}")
+                print(f"{aggregated_output}{delimiter}{block}")
     else:
         print("Could not calculate any network blocks.")
 
